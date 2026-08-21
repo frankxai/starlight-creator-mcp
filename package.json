@@ -1,0 +1,26 @@
+{
+  "name": "starlight-creator-mcp-workspace",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.5.0",
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "build": "pnpm -r --filter './packages/**' run build",
+    "typecheck": "tsc -b tsconfig.build.json",
+    "test": "vitest run",
+    "e2e": "pnpm --filter @starlight-intelligence/creator-server run e2e",
+    "lint": "eslint .",
+    "inspect": "npx --yes @modelcontextprotocol/inspector node packages/server/dist/stdio.js",
+    "clean": "pnpm -r exec rm -rf dist"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.0",
+    "typescript": "~5.9.3",
+    "vitest": "^4.1.11",
+    "eslint": "^9.30.0",
+    "typescript-eslint": "^8.67.0",
+    "@modelcontextprotocol/client": "2.0.0"
+  }
+}

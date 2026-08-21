@@ -1,0 +1,43 @@
+{
+  "name": "@starlight-intelligence/creator-packs-spec",
+  "version": "0.1.0",
+  "description": "creator-pack-manifest.v1: schema, validator, merge rules and CLI for data-only creator packs.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/frankxai/starlight-creator-mcp.git",
+    "directory": "packages/packs-spec"
+  },
+  "homepage": "https://github.com/frankxai/starlight-creator-mcp",
+  "author": "Frank Riemer <https://frankx.ai>",
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "test": "vitest run --root ../.."
+  },
+  "dependencies": {
+    "zod": "^4.2.0",
+    "semver": "^7.8.0"
+  },
+  "bin": {
+    "creator-pack": "./dist/cli.js"
+  },
+  "devDependencies": {
+    "@types/semver": "^7.8.0"
+  }
+}

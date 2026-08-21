@@ -1,0 +1,49 @@
+{
+  "name": "@starlight-intelligence/creator-server",
+  "version": "0.1.0",
+  "description": "MCP server factory for the creator substrate: 16 creator_* tools, pack resources and prompts.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "packs",
+    "README.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/frankxai/starlight-creator-mcp.git",
+    "directory": "packages/server"
+  },
+  "homepage": "https://github.com/frankxai/starlight-creator-mcp",
+  "author": "Frank Riemer <https://frankx.ai>",
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "test": "vitest run --root ../..",
+    "e2e": "vitest run --root ../.. packages/server/test",
+    "prepack": "node -e \"require('fs').cpSync('../../packs/starter','packs/starter',{recursive:true})\""
+  },
+  "dependencies": {
+    "@modelcontextprotocol/server": "2.0.0",
+    "@modelcontextprotocol/node": "2.0.0",
+    "zod": "^4.2.0",
+    "@starlight-intelligence/creator-core": "workspace:*",
+    "@starlight-intelligence/creator-packs-spec": "workspace:*",
+    "@starlight-intelligence/creator-provider-muapi": "workspace:*",
+    "@starlight-intelligence/creator-provider-openrouter": "workspace:*",
+    "@starlight-intelligence/creator-provider-google": "workspace:*"
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/client": "2.0.0"
+  }
+}

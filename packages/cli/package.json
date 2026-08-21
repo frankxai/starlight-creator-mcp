@@ -1,0 +1,42 @@
+{
+  "name": "@starlight-intelligence/creator-cli",
+  "version": "0.1.0",
+  "description": "creator-mcp CLI: stdio, http, setup, doctor, init, approve, inspect.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/frankxai/starlight-creator-mcp.git",
+    "directory": "packages/cli"
+  },
+  "homepage": "https://github.com/frankxai/starlight-creator-mcp",
+  "author": "Frank Riemer <https://frankx.ai>",
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "test": "vitest run --root ../.."
+  },
+  "dependencies": {
+    "@starlight-intelligence/creator-core": "workspace:*",
+    "@starlight-intelligence/creator-server": "workspace:*",
+    "@starlight-intelligence/creator-packs-spec": "workspace:*",
+    "@modelcontextprotocol/server": "2.0.0"
+  },
+  "bin": {
+    "creator-mcp": "./dist/main.js"
+  }
+}

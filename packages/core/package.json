@@ -1,0 +1,44 @@
+{
+  "name": "@starlight-intelligence/creator-core",
+  "version": "0.1.0",
+  "description": "Sovereign creator substrate core: providers, registry, router, best-of loop, vault, fetch guard, sandbox, storage, ledger, jobs, provenance, publishing, license, packs.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/frankxai/starlight-creator-mcp.git",
+    "directory": "packages/core"
+  },
+  "homepage": "https://github.com/frankxai/starlight-creator-mcp",
+  "author": "Frank Riemer <https://frankx.ai>",
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "test": "vitest run --root ../.."
+  },
+  "dependencies": {
+    "zod": "^4.2.0",
+    "semver": "^7.8.0",
+    "@starlight-intelligence/creator-packs-spec": "workspace:*"
+  },
+  "optionalDependencies": {
+    "@napi-rs/keyring": "^1.3.0"
+  },
+  "devDependencies": {
+    "@types/semver": "^7.8.0"
+  }
+}

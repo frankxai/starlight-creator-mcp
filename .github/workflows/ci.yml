@@ -1,0 +1,44 @@
+name: ci
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths-ignore: ['**/*.md', 'docs/**', 'LICENSE']
+  push:
+    branches: [main]
+    paths-ignore: ['**/*.md', 'docs/**', 'LICENSE']
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  typecheck-unit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: 11 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm -r --filter './packages/**' run build
+      - run: pnpm lint
+      - run: npx vitest run packages/packs-spec packages/core
+  e2e:
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+    needs: typecheck-unit
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: 11 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm -r --filter './packages/**' run build
+      - run: npx vitest run packages/server/test
+      - run: node packages/cli/dist/main.js packs
+        env: { CREATOR_MCP_HOME: ${{ runner.temp }}/creator-home, CREATOR_VAULT_BACKEND: encrypted-file }

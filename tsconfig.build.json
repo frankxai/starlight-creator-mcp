@@ -1,0 +1,29 @@
+{
+  "files": [],
+  "references": [
+    {
+      "path": "packages/core"
+    },
+    {
+      "path": "packages/packs-spec"
+    },
+    {
+      "path": "packages/providers/muapi"
+    },
+    {
+      "path": "packages/providers/google"
+    },
+    {
+      "path": "packages/providers/openrouter"
+    },
+    {
+      "path": "packages/server"
+    },
+    {
+      "path": "packages/cli"
+    },
+    {
+      "path": "packages/bundle"
+    }
+  ]
+}

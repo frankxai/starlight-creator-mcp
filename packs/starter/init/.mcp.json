@@ -1,0 +1,1 @@
+{ "mcpServers": { "creator": { "command": "npx", "args": ["-y", "starlight-creator-mcp"] } } }
