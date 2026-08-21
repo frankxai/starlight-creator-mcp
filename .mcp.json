@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "creator-dev": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["packages/bundle/dist/main.js", "stdio"],
+      "env": { "CREATOR_LOG_LEVEL": "warn" }
+    }
+  }
+}
