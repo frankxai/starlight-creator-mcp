@@ -10,15 +10,24 @@ One MCP engine for agentic creators, built so the **user's own machine and keys*
 
 ## Install
 
+The npm name `starlight-creator-mcp` is **not on the registry yet** (verified 2026-08-22: packument 404). Do not run `npx -y starlight-creator-mcp` until a first publish exists. Use this repo:
+
 ```bash
-claude mcp add starlight-creator -s user -- npx -y starlight-creator-mcp
-npx starlight-creator-mcp setup     # keys → OS keychain
-npx starlight-creator-mcp doctor    # verify providers, packs, ledger
+git clone https://github.com/frankxai/starlight-creator-mcp.git
+cd starlight-creator-mcp
+pnpm install
+pnpm -r --filter './packages/**' run build
+node packages/bundle/dist/main.js doctor
+node packages/bundle/dist/main.js setup --print   # prints Claude / Cursor mcpServers JSON
 ```
 
-Cursor / Antigravity / Codex: `npx starlight-creator-mcp setup --print` prints the `mcpServers` block.
+`setup` without `--print` is interactive (stores keys in the OS keychain). Non-TTY correctly exits 2.
 
-Providers in this release: **OpenRouter** (text, images, async video, transcription through one key), **MuAPI** (226-model aggregated catalog), **Google Gemini** (vision/text judge). fal and ElevenLabs follow.
+Verified locally 2026-08-22 (`main` `4185596`): `doctor` exit 0 with starter pack + local ledger/storage; keys optional.
+
+After the first publish, the install path becomes `npx -y starlight-creator-mcp`. Until then, point MCP clients at `node /absolute/path/to/packages/bundle/dist/main.js`.
+
+Providers in this tree: **OpenRouter**, **MuAPI**, **Google Gemini**. fal and ElevenLabs are optional later adapters, not required to run doctor.
 
 ## Tools (16)
 
