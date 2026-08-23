@@ -7,21 +7,12 @@
   "include": [
     "src"
   ],
+  "exclude": [
+    "src/**/*.test.ts"
+  ],
   "references": [
     {
-      "path": "../cli"
-    },
-    {
-      "path": "../server"
-    },
-    {
       "path": "../core"
-    },
-    {
-      "path": "../packs-spec"
-    },
-    {
-      "path": "../storage-s3"
     }
   ]
 }
