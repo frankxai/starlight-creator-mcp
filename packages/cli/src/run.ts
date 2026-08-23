@@ -89,7 +89,15 @@ async function setup(b: CliBrand, args: string[]): Promise<number> {
   const vault = await createVault()
   if (has(args, '--print')) {
     const pkg = b.npmPackage ?? b.brand
-    process.stdout.write(`Claude Code:\n  claude mcp add ${b.brand.replace(/-mcp$/, '')} -s user -- npx -y ${pkg}\n\nCursor / Antigravity / Codex (.mcp.json or settings):\n${JSON.stringify({ mcpServers: { [b.brand.replace(/-mcp$/, '')]: { command: 'npx', args: ['-y', pkg] } } }, null, 2)}\n\nKeys are read from the OS keychain (${vault.backend}) or from env: ${SECRETS.map(s => s.name).join(', ')}\n`)
+    const localBin = path.resolve(process.argv[1] ?? 'packages/bundle/dist/main.js')
+    const name = b.brand.replace(/-mcp$/, '')
+    const config = JSON.stringify({ mcpServers: { [name]: { command: process.execPath, args: [localBin] } } }, null, 2)
+    process.stdout.write(
+      `Claude Code (local, until npm publish exists):\n  claude mcp add ${name} -s user -- ${process.execPath} ${localBin}\n\n` +
+      `Cursor / Antigravity / Codex (.mcp.json or settings):\n${config}\n\n` +
+      `Do not run \`npx -y ${pkg}\` until that package is on the npm registry.\n` +
+      `Keys are read from the OS keychain (${vault.backend}) or from env: ${SECRETS.map(s => s.name).join(', ')}\n`,
+    )
     return 0
   }
   if (!process.stdin.isTTY) { process.stderr.write('setup needs an interactive terminal; or set keys as environment variables\n'); return 2 }
