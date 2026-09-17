@@ -1,10 +1,11 @@
 {
   "mcpServers": {
     "creator-dev": {
-      "type": "stdio",
       "command": "node",
-      "args": ["packages/bundle/dist/main.js", "stdio"],
-      "env": { "CREATOR_LOG_LEVEL": "warn" }
+      "args": [
+        "C:/Users/frank/starlight/repos/starlight-creator-mcp/packages/bundle/dist/main.js",
+        "stdio"
+      ]
     }
   }
 }
