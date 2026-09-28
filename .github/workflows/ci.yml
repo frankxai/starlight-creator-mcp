@@ -41,4 +41,6 @@ jobs:
       - run: pnpm -r --filter './packages/**' run build
       - run: npx vitest run packages/server/test
       - run: node packages/cli/dist/main.js packs
-        env: { CREATOR_MCP_HOME: ${{ runner.temp }}/creator-home, CREATOR_VAULT_BACKEND: encrypted-file }
+        env:
+          CREATOR_MCP_HOME: ${{ runner.temp }}/creator-home
+          CREATOR_VAULT_BACKEND: encrypted-file
