@@ -15,8 +15,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-        with: { version: 11 }
+      - uses: pnpm/action-setup@v4  # version comes from package.json packageManager
       - uses: actions/setup-node@v4
         with: { node-version: 22, cache: pnpm }
       - run: pnpm install --frozen-lockfile
@@ -33,12 +32,13 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-        with: { version: 11 }
+      - uses: pnpm/action-setup@v4  # version comes from package.json packageManager
       - uses: actions/setup-node@v4
         with: { node-version: 22, cache: pnpm }
       - run: pnpm install --frozen-lockfile
       - run: pnpm -r --filter './packages/**' run build
       - run: npx vitest run packages/server/test
       - run: node packages/cli/dist/main.js packs
-        env: { CREATOR_MCP_HOME: ${{ runner.temp }}/creator-home, CREATOR_VAULT_BACKEND: encrypted-file }
+        env:
+          CREATOR_MCP_HOME: ${{ runner.temp }}/creator-home
+          CREATOR_VAULT_BACKEND: encrypted-file
