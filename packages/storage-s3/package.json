@@ -32,9 +32,9 @@
     "test": "vitest run --root ../.."
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.1156.0",
-    "@aws-sdk/s3-request-presigner": "^3.1156.0",
-    "@starlight-intelligence/creator-core": "workspace:*"
+    "@starlight-intelligence/creator-core": "workspace:*",
+    "@aws-sdk/client-s3": "^3.1116.0",
+    "@aws-sdk/s3-request-presigner": "^3.1116.0"
   },
   "publishConfig": {
     "access": "public"

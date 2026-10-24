@@ -35,15 +35,15 @@
     "prepack": "node -e \"require('fs').cpSync('../../packs/starter','packs/starter',{recursive:true})\""
   },
   "dependencies": {
-    "@modelcontextprotocol/node": "2.1.1",
     "@modelcontextprotocol/server": "2.3.1",
+    "@modelcontextprotocol/node": "2.1.1",
+    "zod": "^4.2.0",
     "@starlight-intelligence/creator-core": "workspace:*",
     "@starlight-intelligence/creator-packs-spec": "workspace:*",
-    "@starlight-intelligence/creator-provider-elevenlabs": "workspace:*",
-    "@starlight-intelligence/creator-provider-google": "workspace:*",
     "@starlight-intelligence/creator-provider-muapi": "workspace:*",
     "@starlight-intelligence/creator-provider-openrouter": "workspace:*",
-    "zod": "^4.6.7"
+    "@starlight-intelligence/creator-provider-google": "workspace:*",
+    "@starlight-intelligence/creator-provider-elevenlabs": "workspace:*"
   },
   "devDependencies": {
     "@modelcontextprotocol/client": "2.3.1"
