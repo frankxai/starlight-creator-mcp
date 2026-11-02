@@ -59,6 +59,15 @@ advisory coverage, not a proof of vulnerability absence or live provider behavio
 
 ## Publication and recovery
 
+Repository alignment update: Codex, 2 November 2026, revision 1. Review state:
+source change pending independent review and archived-consumer verification.
+Archive verification now requires the canonical `frankxai/starlight-creator-mcp`
+repository and the package's exact workspace directory. npm's normalized
+`git+https` form is accepted. An organization mirror cannot silently become the
+publisher. This follows the existing source and OIDC binding; GitHub organization
+membership does not rename npm scopes. See [npm trusted publishing](https://docs.npmjs.com/trusted-publishers/).
+No package was published by this update.
+
 The main-only manual npm-release.yml workflow builds and verifies one Linux archive
 set, then installs those exact bytes in separate Linux and Windows consumer jobs
 before a separate npm-production OIDC job. Both consumer jobs must succeed. The

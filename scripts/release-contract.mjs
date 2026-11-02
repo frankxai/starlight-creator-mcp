@@ -72,6 +72,11 @@ export function validateEntries(entries, expected) {
   }
   const pkg = JSON.parse(entries.get('package/package.json')?.toString() ?? 'null')
   if (!pkg || pkg.name !== expected.name || pkg.version !== expected.version || pkg.private || pkg.license !== 'MIT') throw new Error('Package identity or license mismatch')
+  const target = targets.find(item => item.name === pkg.name)
+  const repository = pkg.repository
+  if (!target || repository?.type !== 'git'
+    || !['https://github.com/frankxai/starlight-creator-mcp.git', 'git+https://github.com/frankxai/starlight-creator-mcp.git'].includes(repository?.url)
+    || repository?.directory !== target.directory) throw new Error('Package publishing repository or workspace directory mismatch')
   if (pkg.publishConfig?.registry && pkg.publishConfig.registry !== 'https://registry.npmjs.org') throw new Error('Unexpected publication registry')
   if (!entries.has('package/README.md') || !entries.has('package/LICENSE')) throw new Error('Usage documentation and license required')
   const paths = value => typeof value === 'string' ? [value] : value && typeof value === 'object' ? Object.values(value).flatMap(paths) : []
