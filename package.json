@@ -13,6 +13,7 @@
     "e2e": "pnpm --filter @starlight-intelligence/creator-server run e2e",
     "lint": "eslint .",
     "test:release": "node --test scripts/test/*.test.mjs",
+    "release:preflight": "node scripts/check-release-readiness.mjs",
     "verify:release": "node scripts/verify-release.mjs",
     "test:consumer": "node scripts/test-consumer.mjs",
     "inspect": "npx --yes @modelcontextprotocol/inspector node packages/server/dist/stdio.js",

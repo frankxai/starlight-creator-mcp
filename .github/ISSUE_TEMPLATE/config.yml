@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Private security reporting
+    url: https://github.com/frankxai/starlight-creator-mcp/security/policy
+    about: Follow SECURITY.md. Do not report vulnerabilities or credentials in a public issue.
+  - name: Contribution and setup guide
+    url: https://github.com/frankxai/starlight-creator-mcp/blob/main/CONTRIBUTING.md
+    about: Read the reviewed main-branch guide once this contribution is merged.

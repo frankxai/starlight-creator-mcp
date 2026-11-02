@@ -1,0 +1,30 @@
+name: Creator workflow improvement
+description: Describe a user task, its current alternative and a bounded improvement.
+title: "[Workflow]: "
+body:
+  - type: textarea
+    id: outcome
+    attributes:
+      label: User and useful artifact
+      description: Who needs this, and what should they be able to create or recover?
+    validations:
+      required: true
+  - type: textarea
+    id: baseline
+    attributes:
+      label: Current approach and evidence of the problem
+      description: Include an existing tool or manual approach. Remove private customer information.
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Smallest useful change and acceptance check
+      description: Explain the failure/recovery case and any provider, credential, storage or cost implications.
+    validations:
+      required: true
+  - type: textarea
+    id: contribution
+    attributes:
+      label: Possible contribution
+      description: Optional example, fixture, documentation or implementation you could help with. No commitment is assumed.
