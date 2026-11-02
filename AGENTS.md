@@ -15,6 +15,12 @@ tests appropriate to a change. Release logic uses `pnpm run test:release`.
 The hosted CI also verifies real archived-package installs on Linux and Windows.
 Do not treat a source build or tarball dry run as an installed-consumer proof.
 
+Creator CI emits the required `acceptance` check for documentation changes too.
+Do not use CI-skip commit messages or `skip-checks` trailers in this repository;
+the documentation path avoids full builds without suppressing that check.
+This repository's protected-check requirement supersedes the general docs-only
+CI-skip convention. Code, packaged Markdown, licenses and unknown paths use full CI.
+
 Keep keys out of source, logs and package archives. Network retrieval requires
 configured allowed hosts; provider output must not grant itself access. Recovery
 of an existing provider job must not silently submit another paid generation.

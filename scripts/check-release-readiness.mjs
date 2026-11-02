@@ -5,10 +5,14 @@ import { fileURLToPath } from 'node:url'
 import { targets } from './release-contract.mjs'
 
 export const REPOSITORY = 'frankxai/starlight-creator-mcp'
+export const ACCEPTANCE_CHECK = 'acceptance'
+// Observed on this repository's GitHub Actions check runs, 2 November 2026.
+export const ACTIONS_APP_ID = 15368
 export const REQUIRED_CHECKS = [
   'typecheck-unit', 'storage-runtime (22)', 'storage-runtime (24)',
   'release-artifacts (ubuntu-latest)', 'release-artifacts (windows-latest)',
   'published-bytes-windows', 'e2e (ubuntu-latest)', 'e2e (windows-latest)',
+  ACCEPTANCE_CHECK,
 ]
 
 // Diagnostic only. Public API metadata cannot attest npm trust or an independent review.
@@ -40,16 +44,19 @@ export function assessReadiness(evidence) {
   })
   const failed = runs.some(run => run.conclusion === 'failure')
   add('required-checks', missing.length || failed ? 'fail' : 'pass',
-    missing.length ? `Missing successful checks: ${missing.join(', ')}` : failed ? 'Another head check failed' : 'All eight required head checks succeeded')
+    missing.length ? `Missing successful checks: ${missing.join(', ')}` : failed ? 'Another head check failed' : `All ${REQUIRED_CHECKS.length} required head checks succeeded`)
 
   const protection = evidence.protection
   if (protection?.state === 'ok') {
     const value = protection.value
-    const contexts = new Set([...(value.required_status_checks?.contexts ?? []),
-      ...(value.required_status_checks?.checks ?? []).map(check => check.context)])
+    const boundAcceptance = value.required_status_checks?.checks?.some(check =>
+      check.context === ACCEPTANCE_CHECK && check.app_id === ACTIONS_APP_ID)
     const complete = value.enforce_admins?.enabled === true && value.required_status_checks?.strict === true
-      && REQUIRED_CHECKS.every(name => contexts.has(name))
-    add('main-protection', complete ? 'pass' : 'fail', 'Strict required checks and admin enforcement must protect main')
+      && boundAcceptance && value.required_pull_request_reviews?.dismiss_stale_reviews === true
+      && value.required_conversation_resolution?.enabled === true
+      && value.allow_force_pushes?.enabled === false && value.allow_deletions?.enabled === false
+    add('main-protection', complete ? 'pass' : 'fail',
+      'Strict app-bound acceptance, enforced PR policy, resolved conversations and safe branch settings must protect main')
   } else if (Array.isArray(evidence.rules) && evidence.rules.length > 0) {
     add('main-protection', 'unknown', 'Effective rulesets exist; their equivalent enforcement needs review')
   } else {

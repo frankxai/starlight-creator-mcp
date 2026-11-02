@@ -1,6 +1,6 @@
 # GitHub and npm release setup
 
-Author: Codex. Created: 2 November 2026. Revision: 1.
+Author: Codex. Created: 2 November 2026. Revision: 2.
 Review state: proposed source changes; independent provider and maintainer review
 remain required. These notes do not authorize a release or change account settings.
 
@@ -57,14 +57,37 @@ but external gates still remain. `canPublish` is always false. A successful exit
 code is deliberately not an authorization signal.
 
 It selects the latest canonical CI workflow run at the candidate head and requires
-that run's complete job listing, including all eight named jobs and both e2e
-platforms, to succeed. Cancelled earlier runs cannot override the selected run;
+that run's complete job listing, including all eight release-test jobs, both e2e
+platforms and the stable `acceptance` job, to succeed. Cancelled earlier runs cannot override the selected run;
 an incomplete newest run cannot fall back to an older success.
 Skipped, pending and failed checks cannot satisfy that
 condition. Ruleset-only protection is reported as unknown until its equivalent
 enforcement is reviewed. Missing API permissions remain unknown. It does not
-attest a check's GitHub App identity, registry ownership, an independent review,
-live provider behavior or the integrity of unpublished archives.
+attest registry ownership, an independent review, live provider behavior or the
+integrity of unpublished archives. It checks the configured acceptance-context
+binding to the observed GitHub Actions App; that binding does not prove the
+workflow source was independently reviewed.
+
+## Acceptance context and path filtering
+
+The workflow starts for every PR and main push. A dependency-free scope job reads
+the complete Git comparison with rename detection disabled. A rename from source
+into documentation therefore retains the deleted source path. Only the named root
+README/contribution/security guides, PR template and Markdown under `docs/` qualify
+for the lightweight route. Package Markdown, brand packs, licenses, settings JSON,
+workflows and unknown or incomplete comparisons require full CI.
+
+The final `acceptance` job always evaluates all job results. A documentation run
+requires successful path classification and deliberate build-job skips. A full run
+requires all build groups to succeed, including both e2e and archive matrices.
+Failed, cancelled, absent or unexpected skipped jobs cannot pass a full run.
+Draft full-source PRs retain the e2e draft guard and do not pass final acceptance
+until made ready and rerun. Release preflight additionally requires all eight
+release-test jobs, even if an ordinary documentation PR can merge after lightweight CI.
+
+Do not use CI-skip commit messages or `skip-checks` trailers here. GitHub would
+suppress the workflow and leave its required context pending. The path filter
+inside this workflow provides the documentation cost reduction instead.
 
 ## Configuration to review before enabling releases
 
@@ -75,10 +98,9 @@ live provider behavior or the integrity of unpublished archives.
 2. Protect `main` with pull requests, strict required checks, stale-review
    dismissal, admin enforcement, resolved conversations and no force pushes or
    deletions. Bind checks to their actual GitHub App when configuring protection.
-   Align required check names with the workflow before enabling them: the current
-   CI ignores documentation-only changes, and requiring absent jobs would leave
-   those PRs pending indefinitely. Stage an always-emitted acceptance gate or a
-   reviewed path-filter change before turning that policy on.
+   Require the stable `acceptance` context, rather than every conditionally skipped
+   job. The candidate moves documentation filtering inside the workflow, retaining
+   that context without full archive builds for documentation changes.
 3. Keep independent exact-revision review in the estate PR gate and arrange a
    human release approver. Requiring a GitHub approval count above zero also
    needs an eligible reviewer other than the PR author. Do not use a fabricated
@@ -98,6 +120,26 @@ live provider behavior or the integrity of unpublished archives.
 GitHub settings and credential operations require named human approval under the
 estate contract. This branch prepares the evidence and proposed setup; it does
 not change either.
+
+The exact bootstrap proposal is [github-main-protection.json](github-main-protection.json).
+It binds `acceptance` to GitHub Actions App ID 15368, observed on this repository's
+actual check runs on 2 November 2026. It requires strict checks, PRs, stale-review
+dismissal, admin enforcement and resolved conversations; force pushes and deletions
+are disabled. Its GitHub approval count is explicitly zero for the observed solo
+owner. It does not enforce independent provider review; that remains a separate
+estate PR-gate and human responsibility until an eligible review integration is
+configured. Do not describe that unresolved boundary as automatic enforcement.
+
+After exact-revision review and named human approval, refresh the live settings.
+Reconcile any intervening protection or rulesets before applying this bootstrap
+body. The corresponding operation, shown for the approver and not run here, is:
+
+```sh
+gh api --method PUT repos/frankxai/starlight-creator-mcp/branches/main/protection --input docs/github-main-protection.json
+```
+
+Refresh protection after an approved application and rerun the read-only
+diagnostic. A committed proposal is not evidence that GitHub enforced it.
 
 ## Production sequence
 

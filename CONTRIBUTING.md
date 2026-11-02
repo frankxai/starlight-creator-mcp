@@ -36,6 +36,11 @@ lint and relevant package tests. Package or dependency changes also need the
 archive and installed-consumer checks in [NPM_RELEASE.md](docs/NPM_RELEASE.md).
 Hosted CI checks the actual archives on Linux and Windows.
 
+Do not add CI-skip messages such as `[skip ci]` or `skip-checks` trailers to
+Creator commits. Every PR needs the `acceptance` context. Root contributor/docs
+changes take a lightweight path; source, dependencies, package content and license
+changes still run full CI. Missing change evidence also runs the full suite.
+
 Use fixtures and mocked providers for tests. Do not add provider credentials,
 contact live providers or incur charges in ordinary CI. A recovery test should
 show that retrieving an existing job does not silently submit another paid job.

@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { assessReadiness, collectReadiness, REQUIRED_CHECKS, REPOSITORY } from '../check-release-readiness.mjs'
+import { assessReadiness, collectReadiness, REQUIRED_CHECKS, REPOSITORY, ACCEPTANCE_CHECK, ACTIONS_APP_ID } from '../check-release-readiness.mjs'
 import { targets } from '../release-contract.mjs'
 
 function fixture() {
@@ -11,7 +11,10 @@ function fixture() {
     pullRequest: { headRefOid: head, baseRefOid: mainSha, baseRefName: 'main', isDraft: false, isCrossRepository: false },
     workflowRun: { head_sha: head, event: 'pull_request', path: '.github/workflows/ci.yml', head_repository: { full_name: REPOSITORY }, status: 'completed', conclusion: 'success' },
     jobsComplete: true, jobs: REQUIRED_CHECKS.map(name => ({ name, status: 'completed', conclusion: 'success' })),
-    protection: { state: 'ok', value: { enforce_admins: { enabled: true }, required_status_checks: { strict: true, contexts: REQUIRED_CHECKS } } },
+    protection: { state: 'ok', value: { enforce_admins: { enabled: true },
+      required_status_checks: { strict: true, checks: [{ context: ACCEPTANCE_CHECK, app_id: ACTIONS_APP_ID }] },
+      required_pull_request_reviews: { dismiss_stale_reviews: true, required_approving_review_count: 0 },
+      required_conversation_resolution: { enabled: true }, allow_force_pushes: { enabled: false }, allow_deletions: { enabled: false } } },
     rules: [], environment: { protection_rules: [{ type: 'required_reviewers', reviewers: [{ type: 'User' }] }], deployment_branch_policy: { custom_branch_policies: true } },
     branchPolicies: [{ name: 'main', type: 'branch' }],
     packages: targets.map(target => ({ name: target.name, version: '0.1.0', repository: { type: 'git', url: 'https://github.com/' + REPOSITORY + '.git', directory: target.directory } })),
@@ -63,8 +66,23 @@ test('missing protection and unavailable permission evidence have different fail
   assert.equal(state({ ...fixture(), protection: { state: 'missing' } }, 'main-protection'), 'fail')
   assert.equal(state({ ...fixture(), protection: { state: 'unavailable' }, rules: undefined }, 'main-protection'), 'unknown')
   assert.equal(state({ ...fixture(), protection: { state: 'missing' }, rules: [{ type: 'required_status_checks' }] }, 'main-protection'), 'unknown')
-  const incomplete = fixture(); incomplete.protection.value.required_status_checks.contexts = []
+  const incomplete = fixture(); incomplete.protection.value.required_status_checks.checks = []
   assert.equal(state(incomplete, 'main-protection'), 'fail')
+})
+
+test('main enforcement cannot rely on an unbound check, stale review or unsafe branch settings', () => {
+  for (const app_id of [undefined, -1, ACTIONS_APP_ID + 1]) {
+    const value = fixture(); value.protection.value.required_status_checks.checks[0].app_id = app_id
+    assert.equal(state(value, 'main-protection'), 'fail')
+  }
+  for (const [field, patch] of [
+    ['enforce_admins', { enabled: false }], ['required_status_checks', { strict: false, checks: [{ context: ACCEPTANCE_CHECK, app_id: ACTIONS_APP_ID }] }],
+    ['required_pull_request_reviews', null], ['required_pull_request_reviews', { dismiss_stale_reviews: false }],
+    ['required_conversation_resolution', { enabled: false }], ['allow_force_pushes', { enabled: true }], ['allow_deletions', { enabled: true }],
+  ]) {
+    const value = fixture(); value.protection.value[field] = patch
+    assert.equal(state(value, 'main-protection'), 'fail', field)
+  }
 })
 
 test('review and branch environment checks require actual observed settings', () => {

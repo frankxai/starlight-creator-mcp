@@ -2,17 +2,35 @@ name: ci
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
-    paths-ignore: ['**/*.md', 'docs/**', 'LICENSE']
   push:
     branches: [main]
-    paths-ignore: ['**/*.md', 'docs/**', 'LICENSE']
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 permissions:
   contents: read
 jobs:
+  scope:
+    # Keep the required context present for docs; filter paths inside the workflow.
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    outputs:
+      full: ${{ steps.scope.outputs.full }}
+      reason: ${{ steps.scope.outputs.reason }}
+      changed_files: ${{ steps.scope.outputs.changed_files }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with: { node-version: 22 }
+      - run: node --test scripts/test/ci-enforcement.test.mjs
+      - id: scope
+        run: node scripts/ci-scope.mjs
   typecheck-unit:
+    needs: scope
+    if: needs.scope.outputs.full == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -31,7 +49,8 @@ jobs:
       - run: pnpm run test:release
   storage-runtime:
     # Real S3 SDK transport through guardedFetch (>2 MB SigV4 upload) on every advertised Node major.
-    needs: typecheck-unit
+    needs: [scope, typecheck-unit]
+    if: needs.scope.outputs.full == 'true'
     strategy:
       fail-fast: false
       matrix:
@@ -49,8 +68,8 @@ jobs:
       - run: pnpm run build
       - run: npx vitest run packages/storage-s3 packages/core/src/net packages/core/src/error-bodies.test.ts
   e2e:
-    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
-    needs: typecheck-unit
+    if: needs.scope.outputs.full == 'true' && (github.event_name != 'pull_request' || github.event.pull_request.draft == false)
+    needs: [scope, typecheck-unit]
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest]
@@ -71,6 +90,8 @@ jobs:
           CREATOR_MCP_HOME: ${{ runner.temp }}/creator-home
           CREATOR_VAULT_BACKEND: encrypted-file
   release-artifacts:
+    needs: scope
+    if: needs.scope.outputs.full == 'true'
     strategy:
       max-parallel: 1
       fail-fast: false
@@ -123,7 +144,8 @@ jobs:
           retention-days: 7
   published-bytes-windows:
     # Exercise Windows against the exact Linux-built archives intended for publishing.
-    needs: release-artifacts
+    needs: [scope, release-artifacts]
+    if: needs.scope.outputs.full == 'true'
     runs-on: windows-latest
     timeout-minutes: 25
     steps:
@@ -144,3 +166,17 @@ jobs:
           path: artifacts/npm-release/consumer.json
           if-no-files-found: error
           retention-days: 7
+  acceptance:
+    if: always()
+    needs: [scope, typecheck-unit, storage-runtime, e2e, release-artifacts, published-bytes-windows]
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with: { node-version: 22 }
+      - run: node scripts/ci-acceptance.mjs
+        env:
+          CI_NEEDS_JSON: ${{ toJSON(needs) }}
