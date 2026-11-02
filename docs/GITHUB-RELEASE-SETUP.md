@@ -56,8 +56,11 @@ blocked or incomplete automated evidence. Exit 2 means that those checks passed
 but external gates still remain. `canPublish` is always false. A successful exit
 code is deliberately not an authorization signal.
 
-It requires all eight named CI jobs to succeed at the candidate head, including
-Linux and Windows e2e. Skipped, pending and failed checks cannot satisfy that
+It selects the latest canonical CI workflow run at the candidate head and requires
+that run's complete job listing, including all eight named jobs and both e2e
+platforms, to succeed. Cancelled earlier runs cannot override the selected run;
+an incomplete newest run cannot fall back to an older success.
+Skipped, pending and failed checks cannot satisfy that
 condition. Ruleset-only protection is reported as unknown until its equivalent
 enforcement is reviewed. Missing API permissions remain unknown. It does not
 attest a check's GitHub App identity, registry ownership, an independent review,

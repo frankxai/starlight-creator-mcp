@@ -27,12 +27,18 @@ export function assessReadiness(evidence) {
     'PR base must match freshly observed main; receiving-main checks still apply after merge')
   add('review-state', pr?.isDraft === false ? 'pass' : 'fail', 'Draft-skipped acceptance is not a completed e2e run')
 
-  const runs = pr?.statusCheckRollup ?? []
+  const workflow = evidence.workflowRun
+  const currentWorkflow = workflow?.head_sha === evidence.head && workflow.event === 'pull_request'
+    && workflow.path === '.github/workflows/ci.yml' && workflow.head_repository?.full_name === REPOSITORY
+    && workflow.status === 'completed' && workflow.conclusion === 'success' && evidence.jobsComplete === true
+  add('ci-source', currentWorkflow ? 'pass' : 'fail',
+    'The latest canonical CI run for this head must complete successfully with a complete job listing')
+  const runs = evidence.jobs ?? []
   const missing = REQUIRED_CHECKS.filter(name => {
     const matches = runs.filter(run => run.name === name)
-    return matches.length === 0 || matches.some(run => run.status !== 'COMPLETED' || run.conclusion !== 'SUCCESS')
+    return matches.length === 0 || matches.some(run => run.status !== 'completed' || run.conclusion !== 'success')
   })
-  const failed = runs.some(run => run.conclusion === 'FAILURE' || run.state === 'FAILURE' || run.state === 'ERROR')
+  const failed = runs.some(run => run.conclusion === 'failure')
   add('required-checks', missing.length || failed ? 'fail' : 'pass',
     missing.length ? `Missing successful checks: ${missing.join(', ')}` : failed ? 'Another head check failed' : 'All eight required head checks succeeded')
 
@@ -99,17 +105,26 @@ export function collectReadiness(root, prNumber) {
   if (!/^[1-9]\d*$/.test(String(prNumber))) throw new Error('A positive PR number is required')
   const api = 'repos/' + REPOSITORY
   const pullRequest = JSON.parse(run('gh', ['pr', 'view', String(prNumber), '--repo', REPOSITORY,
-    '--json', 'headRefOid,baseRefOid,baseRefName,isDraft,isCrossRepository,statusCheckRollup'], root))
+    '--json', 'headRefOid,baseRefOid,baseRefName,isDraft,isCrossRepository'], root))
+  const head = run('git', ['rev-parse', 'HEAD'], root)
+  const workflowRuns = github(api + '/actions/workflows/ci.yml/runs?head_sha=' + head + '&event=pull_request&per_page=100', root)
+  const workflowRun = workflowRuns.value?.workflow_runs
+    ?.filter(item => item.head_sha === head && item.event === 'pull_request')
+    .sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at) || b.id - a.id)[0]
+  const jobListing = Number.isSafeInteger(workflowRun?.id)
+    ? github(api + '/actions/runs/' + workflowRun.id + '/jobs?filter=latest&per_page=100', root) : undefined
   const branchRules = github(api + '/rules/branches/main?per_page=100', root)
   const policies = github(api + '/environments/npm-production/deployment-branch-policies?per_page=100', root)
   const evidence = {
-    head: run('git', ['rev-parse', 'HEAD'], root), dirty: run('git', ['status', '--porcelain'], root).length > 0,
+    head, dirty: run('git', ['status', '--porcelain'], root).length > 0,
+    workflowRun, jobs: jobListing?.value?.jobs,
+    jobsComplete: Array.isArray(jobListing?.value?.jobs) && jobListing.value.total_count === jobListing.value.jobs.length,
     repository: github(api, root).value, pullRequest, mainSha: github(api + '/commits/main', root).value?.sha,
     protection: github(api + '/branches/main/protection', root), rules: branchRules.value,
     environment: github(api + '/environments/npm-production', root).value, branchPolicies: policies.value?.branch_policies,
     packages: targets.map(target => JSON.parse(readFileSync(join(root, target.directory, 'package.json'), 'utf8'))),
   }
-  return { observedAt: new Date().toISOString(), ...assessReadiness(evidence) }
+  return { observedAt: new Date().toISOString(), ciRun: workflowRun?.html_url, ...assessReadiness(evidence) }
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

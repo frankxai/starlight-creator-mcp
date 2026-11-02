@@ -8,8 +8,9 @@ function fixture() {
   return {
     head, mainSha, dirty: false,
     repository: { full_name: REPOSITORY, default_branch: 'main', visibility: 'public' },
-    pullRequest: { headRefOid: head, baseRefOid: mainSha, baseRefName: 'main', isDraft: false, isCrossRepository: false,
-      statusCheckRollup: REQUIRED_CHECKS.map(name => ({ name, status: 'COMPLETED', conclusion: 'SUCCESS' })) },
+    pullRequest: { headRefOid: head, baseRefOid: mainSha, baseRefName: 'main', isDraft: false, isCrossRepository: false },
+    workflowRun: { head_sha: head, event: 'pull_request', path: '.github/workflows/ci.yml', head_repository: { full_name: REPOSITORY }, status: 'completed', conclusion: 'success' },
+    jobsComplete: true, jobs: REQUIRED_CHECKS.map(name => ({ name, status: 'completed', conclusion: 'success' })),
     protection: { state: 'ok', value: { enforce_admins: { enabled: true }, required_status_checks: { strict: true, contexts: REQUIRED_CHECKS } } },
     rules: [], environment: { protection_rules: [{ type: 'required_reviewers', reviewers: [{ type: 'User' }] }], deployment_branch_policy: { custom_branch_policies: true } },
     branchPolicies: [{ name: 'main', type: 'branch' }],
@@ -26,14 +27,26 @@ test('complete metadata still cannot authorize publication or attest independent
 })
 
 test('draft-skipped, pending, failed and duplicate check results cannot pass acceptance', () => {
-  for (const conclusion of ['SKIPPED', 'FAILURE', 'CANCELLED', undefined]) {
-    const value = fixture(); value.pullRequest.statusCheckRollup[0].conclusion = conclusion
+  for (const conclusion of ['skipped', 'failure', 'cancelled', undefined]) {
+    const value = fixture(); value.jobs[0].conclusion = conclusion
     assert.equal(state(value, 'required-checks'), 'fail')
   }
-  const duplicate = fixture(); duplicate.pullRequest.statusCheckRollup.push({ name: REQUIRED_CHECKS[0], status: 'IN_PROGRESS', conclusion: '' })
+  const duplicate = fixture(); duplicate.jobs.push({ name: REQUIRED_CHECKS[0], status: 'in_progress', conclusion: '' })
   assert.equal(state(duplicate, 'required-checks'), 'fail')
   const draft = fixture(); draft.pullRequest.isDraft = true
   assert.equal(state(draft, 'review-state'), 'fail')
+})
+
+test('one canonical source-bound CI run is required, independent of stale PR rollups', () => {
+  const value = fixture()
+  value.pullRequest.statusCheckRollup = [{ name: REQUIRED_CHECKS[0], conclusion: 'CANCELLED' }]
+  assert.equal(state(value, 'required-checks'), 'pass')
+  for (const patch of [{ head_sha: 'c'.repeat(40) }, { event: 'workflow_dispatch' },
+    { path: '.github/workflows/other.yml' }, { head_repository: { full_name: 'other/fork' } },
+    { status: 'in_progress', conclusion: null }, { conclusion: 'cancelled' }]) {
+    assert.equal(state({ ...fixture(), workflowRun: { ...fixture().workflowRun, ...patch } }, 'ci-source'), 'fail')
+  }
+  assert.equal(state({ ...fixture(), jobsComplete: false }, 'ci-source'), 'fail')
 })
 
 test('stale, dirty, forked and moved source or base remain blocked', () => {
