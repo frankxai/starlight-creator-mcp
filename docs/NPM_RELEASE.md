@@ -52,10 +52,21 @@ are omitted from its environment. Historical counts are not current evidence; us
 the test output and source-bound receipts for the chosen revision. Local working-tree receipts are marked dirty and
 cannot authorize publication. Hosted results must identify their own exact revision.
 
-MCP server/client are pinned 2.3.1 and the Node adapter 2.1.1. Hono, js-yaml and
-brace-expansion were updated within their existing dependency ranges; the complete
-workspace audit reported zero advisories after those changes. That is registry
-advisory coverage, not a proof of vulnerability absence or live provider behavior.
+Dependency repair: Codex, 2 November 2026, revision 2. The initial hosted archive
+jobs stopped at 19 current audit findings. MCP server/client now pin 2.4.0 and
+the Node adapter 2.1.2; Undici pins 7.30.1 and Zod requires 4.6.7 or newer.
+Vitest requires 4.1.12 and TypeScript ESLint requires 8.72.1. ESLint moves to
+10.14.0 with its supported Node 22.13 floor and the existing flat configuration.
+The lockfile refresh retains the workspace dependency structure.
+
+Scoped workspace overrides select Vite 8.2.4 and minimatch 11.0.1 for the
+affected modern dependency ranges. The minimatch override excludes legacy v3
+APIs. References: [minimatch advisory](https://github.com/advisories/GHSA-g3hv-75wg-m249)
+and [ESLint migration guide](https://eslint.org/docs/latest/use/migrate-to-10.0.0).
+The resulting audit reports zero advisories; frozen lockfile validation and
+all 16 native release tests pass locally. This is advisory and source-contract
+coverage. Hosted builds, lint, archived consumers and independent review must
+validate this exact dependency candidate before release.
 
 ## Publication and recovery
 
