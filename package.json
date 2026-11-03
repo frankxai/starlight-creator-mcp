@@ -13,17 +13,18 @@
     "e2e": "pnpm --filter @starlight-intelligence/creator-server run e2e",
     "lint": "eslint .",
     "test:release": "node --test scripts/test/*.test.mjs",
+    "release:preflight": "node scripts/check-release-readiness.mjs",
     "verify:release": "node scripts/verify-release.mjs",
     "test:consumer": "node scripts/test-consumer.mjs",
     "inspect": "npx --yes @modelcontextprotocol/inspector node packages/server/dist/stdio.js",
     "clean": "pnpm -r exec rm -rf dist"
   },
   "devDependencies": {
-    "@types/node": "^22.15.0",
+    "@modelcontextprotocol/client": "2.4.0",
+    "@types/node": "^22.20.5",
+    "eslint": "^10.14.0",
     "typescript": "~5.9.3",
-    "vitest": "^4.1.11",
-    "eslint": "^9.30.0",
-    "typescript-eslint": "^8.67.0",
-    "@modelcontextprotocol/client": "2.3.1"
+    "typescript-eslint": "^8.72.1",
+    "vitest": "^4.1.12"
   }
 }

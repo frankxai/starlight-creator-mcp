@@ -26,7 +26,7 @@ describe('MuAPI releases unread error bodies', () => {
   const released = () => vi.waitFor(() => { expect(sockets.size).toBe(0) }, { timeout: 1000 })
 
   async function provider(base: string) {
-    const vault = await createVault({ backend: 'memory' })
+    const vault = await createVault({ backend: 'memory', env: {} })
     await vault.set('MUAPI_KEY', 'fixture-only')
     return createMuapiProvider({ vault, baseUrl: base, fetchPolicy: { allowHosts: [], allowPrivateHosts: true } })
   }
@@ -45,14 +45,41 @@ describe('MuAPI releases unread error bodies', () => {
     await released()
   })
 
-  it('releases each retried 5xx submission body', async () => {
+  it('releases a stalled 5xx submission body without replaying the generation', async () => {
     let calls = 0
     const muapi = await provider(await fixture((_url, res) => { calls++; stall(res, 502) }))
-    const pending = expect(muapi.submit({ task: 'i2v', model, prompt: 'fixture', params: {}, sources: [] })).rejects.toMatchObject({ status: 502 })
+    const pending = expect(muapi.submit({ task: 'i2v', model, prompt: 'fixture', params: {}, sources: [] })).rejects.toMatchObject({ status: 502, retryable: false, message: expect.stringContaining('submission outcome unknown') })
     await vi.waitFor(() => { expect(calls).toBe(1) })
     await released()
     await pending
-    expect(calls).toBe(3)
+    expect(calls).toBe(1)
+    await released()
+  })
+
+  it.each(['request_id', 'id'])('preserves an existing %s from a 5xx response without a second POST', async field => {
+    let calls = 0
+    const muapi = await provider(await fixture((_url, res) => {
+      calls++; res.writeHead(503, { 'content-type': 'application/json' }); res.end(JSON.stringify({ [field]: 'existing-job' }))
+    }))
+    expect(await muapi.submit({ task: 'i2v', model, prompt: 'fixture', params: {}, sources: [] }))
+      .toMatchObject({ providerJobId: 'existing-job', status: 'queued' })
+    expect(calls).toBe(1)
+    await released()
+  })
+
+  it.each([
+    { label: 'no ID', body: '{}' },
+    { label: 'invalid JSON', body: '{broken' },
+    { label: 'numeric ID', body: '{"request_id":123}' },
+    { label: 'control character', body: JSON.stringify({ request_id: 'bad\njob' }) },
+    { label: 'overlong ID', body: JSON.stringify({ request_id: 'a'.repeat(257) }) },
+    { label: 'oversized body', body: JSON.stringify({ padding: 'x'.repeat(20_000), request_id: 'existing-job' }) },
+  ])('does not replay a 5xx submission with $label', async ({ body }) => {
+    let calls = 0
+    const muapi = await provider(await fixture((_url, res) => { calls++; res.writeHead(500); res.end(body) }))
+    await expect(muapi.submit({ task: 'i2v', model, prompt: 'fixture', params: {}, sources: [] }))
+      .rejects.toMatchObject({ status: 500, retryable: false })
+    expect(calls).toBe(1)
     await released()
   })
 })

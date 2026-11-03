@@ -1,3 +1,9 @@
 packages:
   - packages/*
   - packages/providers/*
+
+# Patched versions for GHSA-587h-7wmj-h5pm and GHSA-g3hv-75wg-m249.
+# Restrict minimatch replacement to modern named-export consumers; do not rewrite legacy v3 APIs.
+overrides:
+  'vite@>=8.2.0 <8.2.4': 8.2.4
+  'minimatch@>=9.0.0 <11.0.1': 11.0.1

@@ -29,7 +29,26 @@ function entries(pkg) {
   if (pkg.name.endsWith('/creator-mcp')) result.set('package/server.json', Buffer.from(JSON.stringify({ description: 'Fixture creator server', version: pkg.version, packages: [{ identifier: pkg.name, version: pkg.version }] })))
   return result
 }
-const manifest = name => ({ name, version: '0.1.0', license: 'MIT', main: './dist/index.js', types: './dist/index.d.ts' })
+const manifest = name => ({
+  name, version: '0.1.0', license: 'MIT', main: './dist/index.js', types: './dist/index.d.ts',
+  repository: { type: 'git', url: 'https://github.com/frankxai/starlight-creator-mcp.git', directory: targets.find(t => t.name === name)?.directory },
+})
+
+test('archives must identify the canonical publishing repository and their own workspace directory', () => {
+  const pkg = manifest(targets[0].name)
+  assert.equal(validateEntries(entries(pkg), pkg).name, pkg.name)
+  const normalized = { ...pkg, repository: { ...pkg.repository, url: 'git+' + pkg.repository.url } }
+  assert.equal(validateEntries(entries(normalized), normalized).name, pkg.name)
+  for (const repository of [undefined, 'github:frankxai/starlight-creator-mcp',
+    { ...pkg.repository, type: 'svn' },
+    { ...pkg.repository, url: 'https://github.com/Starlight-Intelligence/starlight-creator-mcp.git' },
+    { ...pkg.repository, url: pkg.repository.url + '/attacker' },
+    { ...pkg.repository, directory: 'packages/core' },
+    { ...pkg.repository, directory: undefined }]) {
+    const invalid = { ...pkg, repository }
+    assert.throws(() => validateEntries(entries(invalid), pkg), /publishing repository/)
+  }
+})
 
 test('publication requires both operating systems to consume the same source-bound archive set', () => {
   const bytes = Buffer.from('reviewed archive-set manifest'), sha = 'a'.repeat(40)
