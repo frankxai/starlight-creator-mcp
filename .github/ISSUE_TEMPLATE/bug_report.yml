@@ -1,0 +1,42 @@
+name: Reproducible bug
+description: Report a failure with a small, sanitized reproduction.
+title: "[Bug]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        For security vulnerabilities, use SECURITY.md and private reporting.
+        Do not include keys, private prompts, personal data or private assets.
+        Check existing issues and CONTRIBUTING.md before submitting.
+  - type: input
+    id: version
+    attributes:
+      label: Exact package version or source revision
+      description: Include the package name and installation method.
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: OS, Node version and client
+      description: Include the pnpm or npm version when relevant.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Smallest sanitized reproduction
+      description: Give the steps and minimal fixture needed to reproduce the failure.
+    validations:
+      required: true
+  - type: textarea
+    id: result
+    attributes:
+      label: Expected result and actual result
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Sanitized evidence and recovery attempt
+      description: State whether this used mocks, a source build, an installed archive or a live provider. Do not retry a paid generation just to create this report.

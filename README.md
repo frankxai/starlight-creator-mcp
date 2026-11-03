@@ -20,13 +20,13 @@ git clone https://github.com/frankxai/starlight-creator-mcp.git
 cd starlight-creator-mcp
 pnpm install --frozen-lockfile
 pnpm run build
-node packages/bundle/dist/main.js doctor
-node packages/bundle/dist/main.js setup --print   # prints Claude / Cursor mcpServers JSON
+node packages/cli/dist/main.js doctor
+node packages/cli/dist/main.js setup --print   # prints Claude / Cursor mcpServers JSON
 ```
 
 `setup` without `--print` is interactive (stores keys in the OS keychain). Non-TTY correctly exits 2.
 
-Point MCP clients at `node /absolute/path/to/packages/bundle/dist/main.js`.
+Point MCP clients at `node /absolute/path/to/packages/cli/dist/main.js`.
 After the repaired version is published and checked, its npm command is
 `npx --yes @starlight-intelligence/creator-mcp@0.1.1`. See
 [release verification and remaining gates](docs/NPM_RELEASE.md).
@@ -84,7 +84,7 @@ pnpm install
 pnpm run build
 pnpm test          # unit + protocol-level e2e (spawns the stdio server, mocks providers)
 pnpm lint
-pnpm inspect       # MCP Inspector against dist/stdio.js
+pnpm inspect       # MCP Inspector against packages/server/dist/stdio.js
 ```
 
 MIT.

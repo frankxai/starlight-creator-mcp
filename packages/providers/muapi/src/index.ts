@@ -59,7 +59,12 @@ export function createMuapiProvider(opts: MuapiProviderOptions): Provider {
     let lastErr: unknown
     for (let attempt = 1; attempt <= 3; attempt++) {
       const res = await guardedFetch(`${base}/api/v1/${endpoint}`, { method: 'POST', headers: await headers(), body: JSON.stringify(payload), policy })
-      if (res.status === 429 || res.status >= 500) {
+      if (res.status >= 500) {
+        const requestId = await recoverSubmissionId(res)
+        if (requestId) return { requestId, raw: {} }
+        throw new ProviderError(`muapi ${endpoint} ${res.status}: submission outcome unknown; check provider job history before submitting again`, 'muapi', false, res.status)
+      }
+      if (res.status === 429) {
         await discardBody(res)
         lastErr = new ProviderError(`muapi ${endpoint} ${res.status}`, 'muapi', true, res.status)
         if (attempt === 3) break
@@ -76,6 +81,32 @@ export function createMuapiProvider(opts: MuapiProviderOptions): Provider {
       return { requestId: (raw.request_id as string | undefined) ?? (raw.id as string | undefined) ?? null, raw }
     }
     throw lastErr instanceof Error ? lastErr : new ProviderError(`muapi ${endpoint} failed`, 'muapi')
+  }
+
+  async function recoverSubmissionId(response: Response): Promise<string | null> {
+    const reader = response.body?.getReader()
+    if (!reader) return null
+    let timer: ReturnType<typeof setTimeout> | undefined
+    const deadline = new Promise<never>((_, reject) => { timer = setTimeout(() => reject(new Error('Job-ID read budget exceeded')), 250) })
+    const chunks: Uint8Array[] = []
+    let bytes = 0
+    try {
+      while (true) {
+        const part = await Promise.race([reader.read(), deadline])
+        if (part.done) break
+        bytes += part.value.byteLength
+        if (bytes > 16_384) return null
+        chunks.push(part.value)
+      }
+      const raw = JSON.parse(Buffer.concat(chunks).toString('utf8')) as { request_id?: unknown; id?: unknown } | null
+      const id = raw?.request_id ?? raw?.id
+      return typeof id === 'string' && id.trim().length > 0 && id.length <= 256 && !/[\u0000-\u001f\u007f]/.test(id) ? id : null
+    } catch { return null }
+    finally {
+      clearTimeout(timer)
+      try { await reader.cancel() } catch { /* the guarded body may already be closed */ }
+      reader.releaseLock()
+    }
   }
 
   function outputsFrom(data: Record<string, unknown>, task: Task): ProviderJob['result'] {
